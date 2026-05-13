@@ -6,8 +6,7 @@
 //
 // Run: node test_web_unlocker.js
 // Needs in .env:
-//   BRIGHT_DATA_WEB_UNLOCKER_TOKEN=your_token_here
-//   (or BRIGHT_DATA_USERNAME + BRIGHT_DATA_PASSWORD if using proxy format)
+//   BRIGHT_DATA_API_KEY=your_api_key_here
 
 require('dotenv').config();
 const https = require('https');
@@ -16,16 +15,14 @@ const https = require('https');
 //  CONFIG
 // ─────────────────────────────────────────────────────────────
 
-// Web Unlocker can be called two ways depending on your Bright Data zone setup.
-// Most common for Web Unlocker API is the proxy format:
-//   host : brd.superproxy.io
-//   port : 33335
-//   auth : brd-customer-<id>-zone-<zone>:<password>
-//
-// Set these in your .env:
-const PROXY_HOST = 'brd.superproxy.io';
-const PROXY_PORT = 33335;
-const PROXY_AUTH = process.env.BRIGHT_DATA_WEB_UNLOCKER_AUTH; // full auth string
+const API_KEY = process.env.BRIGHT_DATA_API_KEY;
+
+if (!API_KEY) {
+  console.error('❌ Missing BRIGHT_DATA_API_KEY in .env');
+  console.error('   Add this line to your .env file:');
+  console.error('   BRIGHT_DATA_API_KEY=ddeaae8a-26b3-4f88-893d-a4147266fca5');
+  process.exit(1);
+}
 
 // ── Test URLs — one category + one product per store ─────────
 const TESTS = [
@@ -37,37 +34,38 @@ const TESTS = [
   {
     store   : 'mdcomputers',
     category: 'https://mdcomputers.in/catalog/processor',
-    product : 'https://mdcomputers.in/product/amd-ryzen-5-5600x',
+    product : 'https://mdcomputers.in/product/amd-ryzen-5-5500-100-100000457box-desktop-processor/processor',
   },
   {
     store   : 'primeabgb',
     category: 'https://www.primeabgb.com/buy-online-price-india/cpu-processor/',
-    product : 'https://www.primeabgb.com/online-price-reviews-india/amd-ryzen-5-5600x-processor/',
+    product : 'https://www.primeabgb.com/online-price-reviews-india/amd-ryzen-9-9950x3d2-dual-edition-desktop-processor-100-100001978wof/',
   },
 ];
 
 // ─────────────────────────────────────────────────────────────
-//  CORE FETCH via Web Unlocker proxy
+//  CORE FETCH via Web Unlocker REST API
+//  Simple POST to api.brightdata.com/request with your API key.
+//  Bright Data handles CAPTCHAs, IP rotation, JS rendering
+//  and returns the final HTML of the target page.
 // ─────────────────────────────────────────────────────────────
-
-// Web Unlocker works as an HTTP proxy — you send your target URL through it.
-// Bright Data handles CAPTCHAs, IP rotation, JS rendering (if needed) on their end.
-// Returns the final HTML of the target page.
 
 function fetchViaUnlocker(targetUrl) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
-      url    : targetUrl,
-      format : 'raw',   // returns the HTML directly
-    });
+  url   : targetUrl,
+  zone  : 'web_unlocker1',   // ← add this line
+  format: 'raw',
+});
 
     const options = {
       hostname: 'api.brightdata.com',
       path    : '/request',
       method  : 'POST',
       headers : {
-        'Content-Type' : 'application/json',
-        'Authorization': `Bearer ${process.env.BRIGHT_DATA_API_KEY}`,
+        'Content-Type'  : 'application/json',
+        'Authorization' : `Bearer ${API_KEY}`,
+        'Content-Length': Buffer.byteLength(body),
       },
     };
 
@@ -85,17 +83,15 @@ function fetchViaUnlocker(targetUrl) {
 
 // ─────────────────────────────────────────────────────────────
 //  SIMPLE HTML PARSERS (no Playwright — just regex/string ops)
-//  These mirror what your Playwright parsers extract,
-//  so you can verify the same data comes through.
+//  Mirrors what your Playwright parsers extract so you can
+//  verify the same data comes through the Unlocker API.
 // ─────────────────────────────────────────────────────────────
 
-// Grab first match of a regex from html, return null if not found
 function extract(html, regex) {
   const m = html.match(regex);
   return m ? m[1].trim() : null;
 }
 
-// Count how many product links appear on a category page
 function checkCategoryPage(store, html) {
   const patterns = {
     pickpcparts: /href="(https:\/\/pickpcparts\.in\/(?:processors|rams|graphics_cards|motherboards)\/[^"]+)"/g,
@@ -107,19 +103,16 @@ function checkCategoryPage(store, html) {
   const links   = new Set();
   let match;
   while ((match = pattern.exec(html)) !== null) links.add(match[1]);
-
   return links.size;
 }
 
-// Extract key fields from a product page HTML (rough check — same fields
-// your real parsers pull; verifies the content is present in the response)
 function checkProductPage(store, html) {
   if (store === 'pickpcparts') {
     return {
-      name      : extract(html, /<h1[^>]*elementor-heading-title[^>]*>([^<]+)<\/h1>/i),
-      price     : extract(html, /pcpps-price-table[^>]*>[\s\S]*?<td[^>]*>([\d,₹.]+)<\/td>/i),
-      partId    : extract(html, /acf-list[^>]*>[\s\S]*?<li[^>]*>([A-Z0-9-]{5,30})<\/li>/i),
-      inStock   : /In Stock/i.test(html) ? 'In Stock' : 'Not found',
+      name   : extract(html, /<h1[^>]*elementor-heading-title[^>]*>([^<]+)<\/h1>/i),
+      price  : extract(html, /pcpps-price-table[\s\S]*?<td[^>]*>([\d,₹.]+)<\/td>/i),
+      partId : extract(html, /acf-list[^>]*>[\s\S]*?<li[^>]*>([A-Z0-9-]{5,30})<\/li>/i),
+      inStock: /In Stock/i.test(html) ? 'In Stock' : 'Not found',
     };
   }
 
@@ -155,15 +148,9 @@ function separator(label) {
 }
 
 async function runTests() {
-  if (!PROXY_AUTH) {
-    console.error('❌ Missing BRIGHT_DATA_WEB_UNLOCKER_AUTH in .env');
-    console.error('   Format: brd-customer-<id>-zone-<zonename>:<password>');
-    process.exit(1);
-  }
-
-  console.log('🚀 Web Unlocker API Test');
-  console.log(`   Proxy : ${PROXY_HOST}:${PROXY_PORT}`);
-  console.log(`   Auth  : ${PROXY_AUTH.split(':')[0]}:****`);
+  console.log('🚀 Bright Data Web Unlocker API Test');
+  console.log(`   API Key : ${API_KEY.substring(0, 8)}****`);
+  console.log(`   Endpoint: api.brightdata.com/request`);
 
   const results = [];
 
@@ -183,8 +170,13 @@ async function runTests() {
       console.log(`   Time         : ${ms}ms`);
       console.log(`   Product links: ${links}`);
 
+      // Show raw response snippet if not 200 to help debug
+      if (status !== 200) {
+        console.log(`   Raw response : ${html.substring(0, 300)}`);
+      }
+
       const blocked = /captcha|just a moment|access denied|403|blocked/i.test(html);
-      console.log(`   Blocked?     : ${blocked ? '❌ YES — HTML looks like a block page' : '✅ No'}`);
+      console.log(`   Blocked?     : ${blocked ? '❌ YES' : '✅ No'}`);
 
       results.push({ store: test.store, page: 'category', status, ms, links, blocked });
 
@@ -193,7 +185,6 @@ async function runTests() {
       results.push({ store: test.store, page: 'category', error: err.message });
     }
 
-    // Small gap between requests
     await new Promise(r => setTimeout(r, 2000));
 
     // ── 2. Product page ──────────────────────────────────────
@@ -209,8 +200,12 @@ async function runTests() {
       console.log(`   Time         : ${ms}ms`);
       console.log(`   Extracted    :`, data);
 
+      if (status !== 200) {
+        console.log(`   Raw response : ${html.substring(0, 300)}`);
+      }
+
       const blocked = /captcha|just a moment|access denied|403|blocked/i.test(html);
-      console.log(`   Blocked?     : ${blocked ? '❌ YES — HTML looks like a block page' : '✅ No'}`);
+      console.log(`   Blocked?     : ${blocked ? '❌ YES' : '✅ No'}`);
 
       results.push({ store: test.store, page: 'product', status, ms, data, blocked });
 
@@ -225,7 +220,7 @@ async function runTests() {
   // ── Summary ───────────────────────────────────────────────
   separator('SUMMARY');
   for (const r of results) {
-    const ok = !r.error && !r.blocked && r.status === 200;
+    const ok   = !r.error && !r.blocked && r.status === 200;
     const icon = ok ? '✅' : '❌';
     const detail = r.error
       ? `ERROR: ${r.error}`
@@ -233,9 +228,11 @@ async function runTests() {
     console.log(`  ${icon} ${r.store.padEnd(12)} ${r.page.padEnd(10)} ${detail}`);
   }
 
-  console.log('\n✅ Test complete.');
-  console.log('   If all rows show ✅ and product links > 0 and fields extracted,');
-  console.log('   the Web Unlocker API is working and you can port the full scraper.');
+  console.log('\n📋 What to check:');
+  console.log('   HTTP status = 200       → API call succeeded');
+  console.log('   Product links > 0       → category pagination will work');
+  console.log('   Extracted fields filled → parsers will work');
+  console.log('   Blocked = false         → no bot detection triggered');
 }
 
 runTests().catch(err => {
