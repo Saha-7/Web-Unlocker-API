@@ -56,7 +56,7 @@ const STORES = [
 },
 
 
-  // To add a new store:
+  // To add a new store Example:
   // {
   //   name  : 'vedant',
   //   parser: require('./parsers/vedant'),
