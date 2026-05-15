@@ -1,0 +1,69 @@
+// ─────────────────────────────────────────────────────────────
+//  urls.js  —  Master store + category config
+//
+//  To add a new store:
+//    1. Add a new entry to STORES array below
+//    2. Create src/parsers/<storename>.js with 3 exports:
+//         parseProductLinks(html)            → string[]
+//         getNextPageUrl(html, currentUrl)   → string | null
+//         parseProductDetails(html, url)     → object
+//    3. No freeScrapable flag needed — Web Unlocker handles everything
+// ─────────────────────────────────────────────────────────────
+
+const STORES = [
+  {
+    name  : 'primeabgb',
+    parser: require('./parsers/primeabgb'),
+    categories: [
+      { slug: 'cpu-processor', url: 'https://www.primeabgb.com/buy-online-price-india/cpu-processor/' },
+      // { slug: 'ram-memory',    url: 'https://www.primeabgb.com/buy-online-price-india/ram-memory/' },
+      // { slug: 'motherboards',  url: 'https://www.primeabgb.com/buy-online-price-india/motherboards/' },
+      // { slug: 'graphic-cards', url: 'https://www.primeabgb.com/buy-online-price-india/graphic-cards-gpu/' },
+      // { slug: 'hdd',           url: 'https://www.primeabgb.com/buy-online-price-india/internal-hard-drive/' },
+    ],
+  },
+
+  {
+    name  : 'mdcomputers',
+    parser: require('./parsers/mdcomputers'),
+    categories: [
+      { slug: 'cpu-processor', url: 'https://mdcomputers.in/catalog/processor' },
+      // { slug: 'motherboards',  url: 'https://mdcomputers.in/catalog/motherboard' },
+      // { slug: 'ram-memory',    url: 'https://mdcomputers.in/catalog/ram' },
+    ],
+  },
+
+  // {
+  //   name  : 'pickpcparts',
+  //   parser: require('./parsers/pickpcparts'),
+  //   categories: [
+  //     { slug: 'cpu-processor', url: 'https://pickpcparts.in/processors/' },
+  //     // { slug: 'ram-memory',    url: 'https://pickpcparts.in/rams/' },
+  //     // { slug: 'motherboards',  url: 'https://pickpcparts.in/motherboards/' },
+  //     // { slug: 'graphic-cards', url: 'https://pickpcparts.in/graphics_cards/' },
+  //     // { slug: 'storages',      url: 'https://pickpcparts.in/storages/' },
+  //     // { slug: 'keyboards',     url: 'https://pickpcparts.in/keyboards/' },
+  //     // { slug: 'mice',          url: 'https://pickpcparts.in/mice/' },
+  //   ],
+  // },
+
+  {
+  name  : 'vedant',
+  parser: require('./parsers/vedant'),
+  categories: [
+    { slug: 'cpu-processor', url: 'https://www.vedantcomputers.com/pc-components/processor' },
+  ],
+},
+
+
+  // To add a new store:
+  // {
+  //   name  : 'vedant',
+  //   parser: require('./parsers/vedant'),
+  //   categories: [
+  //     { slug: 'cpu-processor', url: 'https://www.vedantcomputers.com/...' },
+  //   ],
+  // },
+];
+
+module.exports = { STORES };
