@@ -54,7 +54,7 @@ function fetchViaUnlocker(targetUrl) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
   url   : targetUrl,
-  zone  : 'web_unlocker1',   // ← add this line
+  zone  : 'web_unlocker_test',   //  zone name
   format: 'raw',
 });
 
@@ -175,7 +175,7 @@ async function runTests() {
         console.log(`   Raw response : ${html.substring(0, 300)}`);
       }
 
-      const blocked = /captcha|just a moment|access denied|403|blocked/i.test(html);
+      const blocked = /captcha|just a moment|cf-browser-verification|access denied/i.test(html);
       console.log(`   Blocked?     : ${blocked ? '❌ YES' : '✅ No'}`);
 
       results.push({ store: test.store, page: 'category', status, ms, links, blocked });
@@ -204,7 +204,7 @@ async function runTests() {
         console.log(`   Raw response : ${html.substring(0, 300)}`);
       }
 
-      const blocked = /captcha|just a moment|access denied|403|blocked/i.test(html);
+      const blocked = /captcha|just a moment|cf-browser-verification|access denied/i.test(html);
       console.log(`   Blocked?     : ${blocked ? '❌ YES' : '✅ No'}`);
 
       results.push({ store: test.store, page: 'product', status, ms, data, blocked });
