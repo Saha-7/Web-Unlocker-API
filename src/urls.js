@@ -55,6 +55,28 @@ const STORES = [
   ],
 },
 
+// {
+//   name  : 'vishal',
+//   parser: require('./parsers/vishal'),
+//   categories: [
+//     {
+//       slug: 'cpu-processor',
+//       url : 'https://vishalperipherals.com/collections/processors'
+//     },
+//   ],
+// },
+
+
+// {
+//   name  : 'computechstore',
+//   parser: require('./parsers/computechstore'),
+//   categories: [
+//     {
+//       slug: 'cpu-processor',
+//       url : 'https://computechstore.in/product-category/processor'
+//     },
+//   ],
+// },
 
   // To add a new store Example:
   // {
@@ -64,6 +86,30 @@ const STORES = [
   //     { slug: 'cpu-processor', url: 'https://www.vedantcomputers.com/...' },
   //   ],
   // },
+
+//   {
+//   name  : 'pcstudio',
+//   parser: require('./parsers/pcstudio'),
+//   categories: [
+//     {
+//       slug: 'cpu-processor',
+//       url : 'https://www.pcstudio.in/product-category/processor/'
+//     },
+//   ],
+// },
+
+
+{
+  name  : 'elitehubs',
+  parser: require('./parsers/elitehubs'),
+  categories: [
+    {
+      slug: 'cpu-processor',
+      url : 'https://elitehubs.com/collections/processor'
+    },
+  ],
+},
+
 ];
 
 module.exports = { STORES };
