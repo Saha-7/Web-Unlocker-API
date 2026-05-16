@@ -27,33 +27,41 @@ function parseProductLinks(html) {
   return [...links];
 }
 
+const seenPageFingerprints = new Set();
+
 function getNextPageUrl(html, currentUrl) {
-  const $ = cheerio.load(html);
+  const links = parseProductLinks(html);
 
-  let next =
-    $('.ias-trigger a[href]').attr('href') ||
-    $('a[href*="page="]:contains("Load Next")').attr('href') ||
-    $('a[href*="page="]:contains("Next")').attr('href') ||
-    $('.pagination a[href]:contains(">")').attr('href') ||
-    $('.pagination a[href]:contains("Next")').attr('href') ||
-    null;
-
-  next = absoluteUrl(next);
-
-  if (next && next !== currentUrl) {
-    return next;
+  // Stop if no products
+  if (links.length === 0) {
+    return null;
   }
 
-  const hasLoadMore = $('body').text().includes('Load Next Products');
-  if (!hasLoadMore) return null;
+  // Create fingerprint for this page
+  const fingerprint = links.sort().join('|');
+
+  // If same exact products already seen -> stop
+  if (seenPageFingerprints.has(fingerprint)) {
+    console.log('  🛑 Duplicate page detected — stopping pagination');
+    return null;
+  }
+
+  seenPageFingerprints.add(fingerprint);
 
   const url = new URL(currentUrl);
-  const currentPage = parseInt(url.searchParams.get('page') || '1', 10);
-  const nextPage = currentPage + 1;
 
-  if (nextPage > 30) return null;
+  const currentPage = parseInt(
+    url.searchParams.get('page') || '1',
+    10
+  );
 
-  url.searchParams.set('page', String(nextPage));
+  // Safety limit
+  if (currentPage >= 20) {
+    return null;
+  }
+
+  url.searchParams.set('page', String(currentPage + 1));
+
   return url.toString();
 }
 
