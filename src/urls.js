@@ -99,16 +99,16 @@ const STORES = [
 // },
 
 
-{
-  name  : 'elitehubs',
-  parser: require('./parsers/elitehubs'),
-  categories: [
-    {
-      slug: 'cpu-processor',
-      url : 'https://elitehubs.com/collections/processor'
-    },
-  ],
-},
+// {
+//   name  : 'elitehubs',
+//   parser: require('./parsers/elitehubs'),
+//   categories: [
+//     {
+//       slug: 'cpu-processor',
+//       url : 'https://elitehubs.com/collections/processor'
+//     },
+//   ],
+// },
 
 ];
 
