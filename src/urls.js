@@ -55,16 +55,16 @@ const STORES = [
   ],
 },
 
-// {
-//   name  : 'vishal',
-//   parser: require('./parsers/vishal'),
-//   categories: [
-//     {
-//       slug: 'cpu-processor',
-//       url : 'https://vishalperipherals.com/collections/processors'
-//     },
-//   ],
-// },
+{
+  name  : 'vishal',
+  parser: require('./parsers/vishal'),
+  categories: [
+    {
+      slug: 'cpu-processor',
+      url : 'https://vishalperipherals.com/collections/processors'
+    },
+  ],
+},
 
 
 // {
@@ -87,16 +87,16 @@ const STORES = [
   //   ],
   // },
 
-//   {
-//   name  : 'pcstudio',
-//   parser: require('./parsers/pcstudio'),
-//   categories: [
-//     {
-//       slug: 'cpu-processor',
-//       url : 'https://www.pcstudio.in/product-category/processor/'
-//     },
-//   ],
-// },
+  {
+  name  : 'pcstudio',
+  parser: require('./parsers/pcstudio'),
+  categories: [
+    {
+      slug: 'cpu-processor',
+      url : 'https://www.pcstudio.in/product-category/processor/'
+    },
+  ],
+},
 
 
 // {
